@@ -1,25 +1,31 @@
 apply plugin: 'maven-publish'
 
 def gradlePluginVersion = project.hasProperty('mavPluginVersion') ? project.mavPluginVersion : 'master'
-apply from: "https://raw.githubusercontent.com/sky-uk/gradle-maven-plugin/${gradlePluginVersion}/utils.gradle"
-apply from: "https://raw.githubusercontent.com/sky-uk/gradle-maven-plugin/${gradlePluginVersion}/artifact-javadoc-handler.gradle"
-apply from: "https://raw.githubusercontent.com/sky-uk/gradle-maven-plugin/${gradlePluginVersion}/artifact-pom-manager.gradle"
+apply from: "https://raw.githubusercontent.com/Fed93/gradle-maven-plugin/${gradlePluginVersion}/utils.gradle"
+apply from: "https://raw.githubusercontent.com/Fed93/gradle-maven-plugin/${gradlePluginVersion}/artifact-javadoc-handler.gradle"
+apply from: "https://raw.githubusercontent.com/Fed93/gradle-maven-plugin/${gradlePluginVersion}/artifact-pom-manager.gradle"
 
 project.afterEvaluate {
     publishing {
         publications {
-            mavenPublish(MavenPublication) {
-                if (isAndroidProject()) {
-                    artifact bundleReleaseAar
-                    artifact androidJavadocsJar
-                    artifact androidSourcesJar
-                } else {
+            if (isAndroidProject()) {
+                android.libraryVariants.all { variant ->
+                    "maven${variant.name.capitalize()}Publish"(MavenPublication) {
+                        artifact project.tasks.findByName("bundle${variant.name.capitalize()}Aar")
+                        artifact androidJavadocsJar
+                        artifact androidSourcesJar
+
+                        decoratePom(pom)
+                    }
+                }
+            } else {
+                mavenPublish(MavenPublication) {
                     artifact jar
                     artifact sourcesJar
                     artifact javadocJar
+
+                    decoratePom(pom)
                 }
-                
-                decoratePom(pom)
             }
         }
         
